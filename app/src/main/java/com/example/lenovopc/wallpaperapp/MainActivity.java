@@ -1,5 +1,6 @@
 package com.example.lenovopc.wallpaperapp;
 
+import android.app.Activity;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -9,21 +10,27 @@ import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.lenovopc.wallpaperapp.utils.SimpleGestureFilter;
 import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
     private Context mcontext = this;
+    private ProgressBar progressBar;
     private Button closeBtn, wallpaperBtn;
+    private SimpleGestureFilter detector;
     private ImageView wallpaper;
     private String[] wallpaperImageURL;
     private int counter = 0;
@@ -88,8 +95,25 @@ public class MainActivity extends ActionBarActivity {
 
         // new DownloadImageTask(wallpaper).execute(wallpaperImageURL[0]);
 
-        Picasso.with(mcontext).load(wallpaperImageURL[0]).placeholder(R.drawable.ic_launcher).into(wallpaper);
+        Picasso.with(mcontext).load(wallpaperImageURL[counter
+                ]).into(wallpaper);
 
+
+        detector = new SimpleGestureFilter(MainActivity.this, new SimpleGestureFilter.SimpleGestureListener() {
+            @Override
+            public void onSwipe(int direction) {
+                if(direction == detector.SWIPE_LEFT){
+                    showPrevImage();
+                }else{
+                    showNextImage();
+                }
+            }
+
+            @Override
+            public void onDoubleTap() {
+
+            }
+        });
 
     }
 
@@ -108,6 +132,28 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
             Toast.makeText(MainActivity.this, "Error setting wallpaper " + e, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void showPrevImage(){
+        --counter;
+        if(counter < 0){
+            counter = wallpaperImageURL.length -1 ;
+        }
+        Picasso.with(mcontext).load(wallpaperImageURL[counter]).into(wallpaper);
+    }
+
+    private void showNextImage(){
+        ++counter;
+        if(counter > wallpaperImageURL.length -1 ){
+            counter = 0;
+        }
+        Picasso.with(mcontext).load(wallpaperImageURL[counter]).into(wallpaper);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        super.dispatchTouchEvent(ev);
+        return detector.onTouchEvent(ev);
     }
 
     @Override
